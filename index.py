@@ -3,7 +3,7 @@ from myRoster import index as maccas
 from mySimon.Simon import Simon
 server = MyServer()
 
-simon = Simon("", "", "intranet.stpats.vic.edu.au", False) 
+simon = Simon("", "", "intranet.stpats.vic.edu.au", False, False) 
 
 #*** myRoster ***#
 
@@ -15,7 +15,7 @@ def myRosterIndex(data, urldict):
         indexFile.close()
     except IOError:
         content = "<h1 style='font-family:helvetica'>404: File Not Found!</h1>"
-    return(content)
+    return(server.httpRespone(content, ["Content-Type: text/html; charset=utf-8"]))
         
 @server.route("/myRoster/api/(?P<function>[^/]*)")
 def myRosterApi(data, urldict):
@@ -32,9 +32,9 @@ def myRosterApi(data, urldict):
             info = 'Error Occured: Believed cause incorrect data passed'
             print("Exception:", e)
 
-        return(info)        
+        return(server.httpRespone(info)) 
     else:
-        return("No such function exists!")
+        return(server.httpRespone("No such function exists!"))
 
 #*** mySimon ***#
 
@@ -46,40 +46,81 @@ def mySimonIndex(data, urldict):
         indexFile.close()
     except IOError:
         content = "<h1 style='font-family:helvetica'>404: File Not Found!</h1>"
-    return(content)
-        
-@server.route("/mySimon/api/(?P<function>[^/]*)")
-def myRosterApi(data, urldict):
-    if urldict['function'] == 'login':
-        info = ""
-        try:
-            username = eval(data)['Username']
-            password = eval(data)['Password']
+    return(server.httpRespone(content, ["Content-Type: text/html; charset=utf-8"]))
 
-            simon.login(username, password)
-        except Exception as e:
-            info = 'Error Occured: Believed cause incorrect data passed'
-            print("Exception:", e)
+def test(msg, value):
+    print(msg, ':', value)
+    varTest = value
+    return(varTest)
 
-        return(info) 
-    elif urldict['function'] == 'getTimeTableHTML':
-        if not simon.loggedIn:
-            return("Please fam, log in yall!")
-        return(simon.getTT('2019-01-31', 'STURT'))
+varTest = test("Init", 0)
 
+@server.route("/mySimon/api/login")
+def mySimonLogin(data, urldict):
+    global varTest
+    print("varTest:", varTest)
+    varTest = test("Login", 1)
+    print("varTest:", varTest)
+
+    info = ""
+    try:
+        print("(\033[38;5;226mSimon\033[0m) {}".format(data))
+        username = eval(data)['Username']
+        password = eval(data)['Password']
+
+        simon.login(username, password)
+        simon.var = "LOGGED IN"
+        print("\033[38;5;28mValue:\033[0m", simon.var)
+        info = simon.var
+    except Exception as e:
+        print("Data:", data)
+        simon.var = "LOGIN FAILED"
+        info = 'Error Occured: Believed cause incorrect data passed: {}'.format(data)
+        print("Exception:", e)
+
+    return(server.httpRespone(info)) 
+
+@server.route("/mySimon/api/getTimeTableHTML")
+def mySimonTTHTML(data, urldict):
+    global varTest
+    print("varTest:", varTest)
+    print("Is Logged In:", simon.loggedIn)
+    print("\033[38;5;28mValue:\033[0m", simon.var)
+    if not simon.loggedIn:
+        content = "Please fam, log in yall!"
     else:
-        return("No such function exists!")
+        print("Getting Timetable")
+        content = simon.getTT('2019-01-31', 'STURT')
+    return(server.httpRespone(content))
+
 
 #*** Defaults ***#
 
-@server.route("/(?P<path>.*)")
-def defaultFile(data, urldict):
+@server.route("/")
+def index(data, urldict):
     try:
-        indexFile = open('./' + urldict['path'], 'r')
+        indexFile = open('./index/index.html', 'r')
         content = indexFile.read()
         indexFile.close()
     except IOError:
         content = "<h1 style='font-family:helvetica'>404: File Not Found!</h1>"
-    return(content)
+    return(server.httpRespone(content, ["Content-Type: text/html; charset=utf-8"]))
+
+@server.route(r"/(?P<path>.*)")
+def defaultFile(data, urldict):
+    headers = []
+    try:
+        indexFile = open('./' + urldict['path'], 'r')
+        content = indexFile.read()
+        indexFile.close()
+        fileType = urldict["path"].split(".")[-1]
+        if fileType == "js":
+            mimeType = "application/javascript"
+        elif fileType == "css":
+            mimeType = "text/css"
+        headers = ["Content-Type: "+mimeType+"; charset=utf-8"]
+    except IOError:
+        content = "<h1 style='font-family:helvetica'>404: File Not Found!</h1>"
+    return(server.httpRespone(content, headers))
         
 server.run()

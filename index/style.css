@@ -1,0 +1,24 @@
+body {
+  display: grid;
+  justify-content: center;
+}
+h1 {
+  font-family: Helvetica;
+}
+a {
+  font-family: Helvetica;
+  font-weight: bold;
+  text-align: center;
+  color: white;
+  text-decoration: none;
+  background-color: #78c6ff;
+  margin: 3px;
+  padding: 5px;
+  border-radius: 3px;
+}
+.myRosterLink {
+  background-color: red;
+}
+.mySimonLink {
+  background-color: #286090; 
+}

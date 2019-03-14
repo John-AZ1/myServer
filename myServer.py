@@ -9,7 +9,7 @@ from functools import wraps
 
 class MyServer:
     def __init__(self, port=8080, queue_size=5):
-        self.SERVER_ADDRESS = (self.HOST, self.PORT) = '', port
+        self.SERVER_ADDRESS = (self.HOST, self.PORT) = '0.0.0.0', port
         self.REQUEST_QUEUE_SIZE = queue_size
         self.routes = []
 
@@ -28,23 +28,27 @@ class MyServer:
             match = re.compile(route[0]).fullmatch(url)
             if match:
                 return(route[1](data, match.groupdict()))
-        return("Oooof")
+        return(self.httpRespone("Oooof"))
 
     def handle_request(self, client_connection):
-        request = client_connection.recv(1024).decode('utf-8')
+        request = client_connection.recv(1024)
+        # print(request)
+        request = request.decode('utf-8')
+        # print(request)
         try:
             data = request.split('\r\n\r\n')[1]
         except IndexError:
             data = ""
-        http_ok = b"HTTP/1.1 200 OK\n\n"
+        http_ok = b"HTTP/1.1 200 OK\n"
 
         urlRaw, httpRaw = request.split("\r\n", 1)
 
         url = urlRaw.split(' ')[1]
+        print("\033[38;5;202m" + url + "\033[0m")
 
-        http_response = self.infoFromURL(url, data)
+        http_response= self.infoFromURL(url, data)
 
-        client_connection.sendall(http_ok + bytes(http_response, 'utf-8'))
+        client_connection.sendall(http_ok + bytes(http_response["headers"] + http_response["content"], 'utf-8'))
 
     def add_route(self, route, funct):
         self.routes.append([route, funct])
@@ -58,6 +62,9 @@ class MyServer:
                 funct(*args)
             return(wrapped)
         return(decorator)
+
+    def httpRespone(self, content, headers=[]):
+        return({"content": content, "headers": ''.join(header + "\n" for header in headers) + '\n'})
 
     def run(self):
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -94,36 +101,17 @@ if __name__ == '__main__':
     @server.route("/")
     def index(data, urldict):
         try:
-            indexFile = open('./myRoster/index.html', 'r')
+            indexFile = open('./index.html', 'r')
             content = indexFile.read()
             indexFile.close()
         except IOError:
             content = "<h1 style='font-family:helvetica'>404: File Not Found!</h1>"
         return(content)
             
-    @server.route("/api/(?P<function>[^/]*)")
-    def api(data, urldict):
-        if urldict['function'] == 'getRosterHTML':
-            info = ""
-            try:
-                username = eval(data)['Username']
-                password = eval(data)['Password']
-
-                maccas.getCookies(username, password)
-                for shift in maccas.getRoster():
-                    info += shift.html()
-            except Exception as e:
-                info = 'Error Occured: Believed cause incorrect data passed'
-                print("Exception:", e)
-   
-            return(info)        
-        else:
-            return("No such function exists!")
-
     @server.route("/(?P<path>.*)")
     def index(data, urldict):
         try:
-            indexFile = open('./myRoster/' + urldict['path'], 'r')
+            indexFile = open('./' + urldict['path'], 'r')
             content = indexFile.read()
             indexFile.close()
         except IOError:

@@ -6,17 +6,21 @@ import getpass
 import re
 import time
 
-def coloredOK(name, call):
+def coloredOK(name, call, verbose=False):
     responseBool = "\033[38;5;010m{}\033[0m".format(call.status_code) if call.ok else "\033[38;5;196m{}\033[0m".format(call.status_code)
-    print("\033[38;5;036m{} OK:\033[0m {}".format(name, responseBool))
+    if verbose:
+        print("\033[38;5;036m{} OK:\033[0m {}".format(name, responseBool))
 
-def printCookies(cookieList):
+def printCookies(cookieList, verbose=False):
     string = ''.join(["\033[38;5;005m{}: \033[0m{}\n".format(x[0], x[1]) for x in cookieList])
-    print(string.rstrip('\n'))
+    if verbose:
+        print(string.rstrip('\n'))
 
 class Simon:
-    def __init__(self, username, password, url, login=True):
+    def __init__(self, username, password, url, login=True, verbose=False):
         self.url = url
+        self.verbose = verbose
+        self.var = "No Value!"
 
         self.default_headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0',
@@ -71,6 +75,8 @@ class Simon:
         else:
             self.loggedIn = False
 
+    def chgVal(self, val):
+        self.var = val
     def login(self, username, password):
         # logon set's cadata
         logon_data = {
@@ -90,7 +96,7 @@ class Simon:
             data=logon_data
         )
 
-        coloredOK("Logon", logon)
+        coloredOK("Logon", logon, self.verbose)
 
         # asp sets ASP.NET_SessionId
         asp_response = self.session.get(
@@ -99,7 +105,7 @@ class Simon:
             params=self.params['asp'], 
         )
 
-        coloredOK("ASP", asp_response)
+        coloredOK("ASP", asp_response, self.verbose)
 
         # adAuth sets adAuthCookie
         adAuth_response = self.session.post(
@@ -118,8 +124,8 @@ class Simon:
         )
 
         # self.session.cookies.set(**{"name": "YOYO", "value": "Yeah boi!!!"})
-        printCookies(list(self.session.cookies.items()))
-        coloredOK("AdAuth", adAuth_response)
+        printCookies(list(self.session.cookies.items()), self.verbose)
+        coloredOK("AdAuth", adAuth_response, self.verbose)
         self.loggedIn = True
 
     def get_TT(self, date, group):
