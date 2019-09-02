@@ -199,8 +199,7 @@ class Simon:
         }
         
         params = (
-            # (str(int(time.time() * 1000)), ''),
-            '1546503180734'
+            ((str(int(datetime.datetime.now().timestamp() * 1000)), ''),)
         )
         
         response = self.session.post('https://'+self.url+'/Default.asmx/GetUserInfo', headers=headers, params=params)
