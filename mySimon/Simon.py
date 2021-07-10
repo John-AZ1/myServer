@@ -20,8 +20,6 @@ class Simon:
     def __init__(self, username, password, url, login=True, verbose=False):
         self.url = url
         self.verbose = verbose
-        self.var = "No Value!"
-
         self.default_headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0',
             'Accept': 'text/html,application/xhtml+xml,application/xml,application/json,text/javascript;q=0.9,*/*;q=0.8',
@@ -75,8 +73,6 @@ class Simon:
         else:
             self.loggedIn = False
 
-    def chgVal(self, val):
-        self.var = val
     def login(self, username, password):
         # logon set's cadata
         logon_data = {
